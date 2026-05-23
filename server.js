@@ -10,11 +10,10 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.static(join(__dirname, 'dist')));
 
-// SPA fallback - todas as rotas vão pro index.html
 app.get('*', (req, res) => {
   res.sendFile(join(__dirname, 'dist', 'index.html'));
 });
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`Server rodando na porta ${PORT}`);
 });
