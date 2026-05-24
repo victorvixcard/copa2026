@@ -2,64 +2,108 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "./supabase";
 
 // ─── DADOS DO ÁLBUM ──────────────────────────────────────────────────────────
-const mk = (id, label, code, qty) => ({
+// Ordem oficial do álbum Mundo das Figurinhas — Copa do Mundo 2026
+const mkRange = (id, label, code, start, end) => ({
   id, label, code,
-  stickers: Array.from({length: qty}, (_, i) => ({ id: `${code}-${i+1}`, name: `${code}-${i+1}` }))
+  stickers: Array.from({length: end - start + 1}, (_, i) => {
+    const num = start + i;
+    return { id: `${code}-${num}`, name: `${code}-${num}` };
+  })
 });
 
+const mk = (id, label, code, qty) => mkRange(id, label, code, 1, qty);
+
 const ALBUM_DATA = [
-  mk("FWC", "FIFA World Cup 2026", "FWC", 20),
-  mk("MAS", "Mascotes", "MAS", 8),
-  mk("ALG", "Argélia", "ALG", 20),
-  mk("ARG", "Argentina", "ARG", 20),
-  mk("AUS", "Austrália", "AUS", 20),
-  mk("AUT", "Áustria", "AUT", 20),
-  mk("BEL", "Bélgica", "BEL", 20),
-  mk("BIH", "Bósnia e Herzegovina", "BIH", 20),
-  mk("BRA", "Brasil", "BRA", 20),
-  mk("CAN", "Canadá", "CAN", 20),
-  mk("CIV", "Costa do Marfim", "CIV", 20),
-  mk("COD", "Congo DR", "COD", 20),
-  mk("COL", "Colômbia", "COL", 20),
-  mk("CPV", "Cabo Verde", "CPV", 20),
-  mk("CRO", "Croácia", "CRO", 20),
-  mk("CUW", "Curaçao", "CUW", 20),
-  mk("CZE", "República Tcheca", "CZE", 20),
-  mk("ECU", "Equador", "ECU", 20),
-  mk("EGY", "Egito", "EGY", 20),
-  mk("ENG", "Inglaterra", "ENG", 20),
-  mk("ESP", "Espanha", "ESP", 20),
-  mk("FRA", "França", "FRA", 20),
-  mk("GER", "Alemanha", "GER", 20),
-  mk("GHA", "Gana", "GHA", 20),
-  mk("HAI", "Haiti", "HAI", 20),
-  mk("IRN", "Irã", "IRN", 20),
-  mk("IRQ", "Iraque", "IRQ", 20),
-  mk("JOR", "Jordânia", "JOR", 20),
-  mk("JPN", "Japão", "JPN", 20),
-  mk("KOR", "Coreia do Sul", "KOR", 20),
-  mk("KSA", "Arábia Saudita", "KSA", 20),
-  mk("MAR", "Marrocos", "MAR", 20),
-  mk("MEX", "México", "MEX", 20),
-  mk("NED", "Holanda", "NED", 20),
-  mk("NOR", "Noruega", "NOR", 20),
-  mk("NZL", "Nova Zelândia", "NZL", 20),
-  mk("PAN", "Panamá", "PAN", 20),
-  mk("PAR", "Paraguai", "PAR", 20),
-  mk("POR", "Portugal", "POR", 20),
-  mk("QAT", "Qatar", "QAT", 20),
-  mk("RSA", "África do Sul", "RSA", 20),
-  mk("SCO", "Escócia", "SCO", 20),
-  mk("SEN", "Senegal", "SEN", 20),
-  mk("SUI", "Suíça", "SUI", 20),
-  mk("SWE", "Suécia", "SWE", 20),
-  mk("TUN", "Tunísia", "TUN", 20),
-  mk("TUR", "Turquia", "TUR", 20),
-  mk("URU", "Uruguai", "URU", 20),
-  mk("USA", "Estados Unidos", "USA", 20),
-  mk("UZB", "Uzbequistão", "UZB", 20),
-  mk("HIS", "História da Copa", "HIS", 12),
-  mk("EXT", "Figurinhas Extras", "EXT", 12),
+  // ── ABERTURA ──
+  {
+    id: "FWC", label: "FIFA World Cup 2026", code: "FWC",
+    stickers: [
+      { id: "FWC-0", name: "FWC-0" },
+      ...Array.from({length: 20}, (_, i) => ({ id: `FWC-${i+1}`, name: `FWC-${i+1}` }))
+    ]
+  },
+
+  // ── GRUPO A ──
+  mk("MEX", "🇲🇽 México (Grupo A)",         "MEX", 20),
+  mk("RSA", "🇿🇦 África do Sul (Grupo A)",  "RSA", 20),
+  mk("KOR", "🇰🇷 Coreia do Sul (Grupo A)",  "KOR", 20),
+  mk("CZE", "🇨🇿 República Tcheca (Grupo A)","CZE", 20),
+
+  // ── GRUPO B ──
+  mk("CAN", "🇨🇦 Canadá (Grupo B)",          "CAN", 20),
+  mk("BIH", "🇧🇦 Bósnia (Grupo B)",          "BIH", 20),
+  mk("QAT", "🇶🇦 Catar (Grupo B)",           "QAT", 20),
+  mk("SUI", "🇨🇭 Suíça (Grupo B)",           "SUI", 20),
+
+  // ── GRUPO C ──
+  mk("BRA", "🇧🇷 Brasil (Grupo C)",          "BRA", 20),
+  mk("MAR", "🇲🇦 Marrocos (Grupo C)",        "MAR", 20),
+  mk("HAI", "🇭🇹 Haiti (Grupo C)",           "HAI", 20),
+  mk("SCO", "🏴󠁧󠁢󠁳󠁣󠁴󠁿 Escócia (Grupo C)",         "SCO", 20),
+
+  // ── GRUPO D ──
+  mk("USA", "🇺🇸 Estados Unidos (Grupo D)",  "USA", 20),
+  mk("PAR", "🇵🇾 Paraguai (Grupo D)",        "PAR", 20),
+  mk("AUS", "🇦🇺 Austrália (Grupo D)",       "AUS", 20),
+  mk("TUR", "🇹🇷 Turquia (Grupo D)",         "TUR", 20),
+
+  // ── GRUPO E ──
+  mk("GER", "🇩🇪 Alemanha (Grupo E)",        "GER", 20),
+  mk("CUW", "🇨🇼 Curaçao (Grupo E)",         "CUW", 20),
+  mk("CIV", "🇨🇮 Costa do Marfim (Grupo E)", "CIV", 20),
+  mk("ECU", "🇪🇨 Equador (Grupo E)",         "ECU", 20),
+
+  // ── GRUPO F ──
+  mk("NED", "🇳🇱 Holanda (Grupo F)",         "NED", 20),
+  mk("JPN", "🇯🇵 Japão (Grupo F)",           "JPN", 20),
+  mk("SWE", "🇸🇪 Suécia (Grupo F)",          "SWE", 20),
+  mk("TUN", "🇹🇳 Tunísia (Grupo F)",         "TUN", 20),
+
+  // ── GRUPO G ──
+  mk("BEL", "🇧🇪 Bélgica (Grupo G)",         "BEL", 20),
+  mk("EGY", "🇪🇬 Egito (Grupo G)",           "EGY", 20),
+  mk("IRN", "🇮🇷 Irã (Grupo G)",             "IRN", 20),
+  mk("NZL", "🇳🇿 Nova Zelândia (Grupo G)",   "NZL", 20),
+
+  // ── GRUPO H ──
+  mk("ESP", "🇪🇸 Espanha (Grupo H)",         "ESP", 20),
+  mk("CPV", "🇨🇻 Cabo Verde (Grupo H)",      "CPV", 20),
+  mk("KSA", "🇸🇦 Arábia Saudita (Grupo H)",  "KSA", 20),
+  mk("URU", "🇺🇾 Uruguai (Grupo H)",         "URU", 20),
+
+  // ── GRUPO I ──
+  mk("FRA", "🇫🇷 França (Grupo I)",          "FRA", 20),
+  mk("SEN", "🇸🇳 Senegal (Grupo I)",         "SEN", 20),
+  mk("IRQ", "🇮🇶 Iraque (Grupo I)",          "IRQ", 20),
+  mk("NOR", "🇳🇴 Noruega (Grupo I)",         "NOR", 20),
+
+  // ── GRUPO J ──
+  mk("ARG", "🇦🇷 Argentina (Grupo J)",       "ARG", 20),
+  mk("ALG", "🇩🇿 Argélia (Grupo J)",         "ALG", 20),
+  mk("AUT", "🇦🇹 Áustria (Grupo J)",         "AUT", 20),
+  mk("JOR", "🇯🇴 Jordânia (Grupo J)",        "JOR", 20),
+
+  // ── GRUPO K ──
+  mk("POR", "🇵🇹 Portugal (Grupo K)",        "POR", 20),
+  mk("COD", "🇨🇩 Congo DR (Grupo K)",        "COD", 20),
+  mk("UZB", "🇺🇿 Uzbequistão (Grupo K)",     "UZB", 20),
+  mk("COL", "🇨🇴 Colômbia (Grupo K)",        "COL", 20),
+
+  // ── GRUPO L ──
+  mk("ENG", "🏴󠁧󠁢󠁥󠁮󠁧󠁿 Inglaterra (Grupo L)",       "ENG", 20),
+  mk("CRO", "🇭🇷 Croácia (Grupo L)",         "CRO", 20),
+  mk("GHA", "🇬🇭 Gana (Grupo L)",            "GHA", 20),
+  mk("PAN", "🇵🇦 Panamá (Grupo L)",          "PAN", 20),
+
+  // ── PÁGINAS FINAIS ──
+  {
+    id: "HIS", label: "🏆 FIFA World Cup History", code: "FWC-HIS",
+    stickers: Array.from({length: 10}, (_, i) => ({ id: `FWCH-${i+1}`, name: `FWCH-${i+1}` }))
+  },
+  {
+    id: "CC", label: "🥤 Coca-Cola Especiais", code: "CC",
+    stickers: Array.from({length: 14}, (_, i) => ({ id: `CC-${i+1}`, name: `CC-${i+1}` }))
+  },
 ];
 
 const TOTAL = ALBUM_DATA.reduce((s, sec) => s + sec.stickers.length, 0);
