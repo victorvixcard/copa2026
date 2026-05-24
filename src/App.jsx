@@ -494,6 +494,42 @@ export default function App() {
     .toLowerCase()
     .trim();
 
+  // Faz scroll considerando a altura da topbar fixa (cross-platform: web, iOS, Android, WebView)
+  const scrollToSection = (sectionId) => {
+    // requestAnimationFrame garante que o DOM finalizou a renderização antes de medir
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const el = sectionRefs.current[sectionId];
+        if (!el) return;
+
+        // Detecta a topbar — usa altura real renderizada
+        const topbar = document.querySelector('[data-topbar="true"]');
+        const topbarHeight = topbar ? topbar.getBoundingClientRect().height : 0;
+
+        // getBoundingClientRect().top dá a distância do topo da viewport
+        const rect = el.getBoundingClientRect();
+
+        // Pega o scroll atual de forma cross-browser (iOS Safari, Android, etc)
+        const currentScroll = window.pageYOffset
+          || document.documentElement.scrollTop
+          || document.body.scrollTop
+          || 0;
+
+        const targetY = currentScroll + rect.top - topbarHeight - 12;
+
+        // Detecta suporte a smooth scrolling (iOS antigo não suporta)
+        const supportsSmooth = 'scrollBehavior' in document.documentElement.style;
+
+        if (supportsSmooth) {
+          window.scrollTo({ top: Math.max(0, targetY), behavior: "smooth" });
+        } else {
+          // Fallback para iOS antigo: scroll instantâneo
+          window.scrollTo(0, Math.max(0, targetY));
+        }
+      });
+    });
+  };
+
   const handleSearch = (val) => {
     setSearch(val);
     if (!val.trim()) { setHighlight(null); return; }
@@ -506,7 +542,7 @@ export default function App() {
       const found = sec.stickers.find(s => s.id.toUpperCase() === qUpper);
       if (found) {
         setHighlight(found.id);
-        setTimeout(() => sectionRefs.current[sec.id]?.scrollIntoView({ behavior: "smooth", block: "center" }), 100);
+        scrollToSection(sec.id);
         return;
       }
     }
@@ -515,7 +551,7 @@ export default function App() {
     const sectionByCode = ALBUM_DATA.find(sec => norm(sec.code) === q);
     if (sectionByCode) {
       setHighlight(null);
-      setTimeout(() => sectionRefs.current[sectionByCode.id]?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
+      scrollToSection(sectionByCode.id);
       return;
     }
 
@@ -525,7 +561,7 @@ export default function App() {
     );
     if (sectionByName) {
       setHighlight(null);
-      setTimeout(() => sectionRefs.current[sectionByName.id]?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
+      scrollToSection(sectionByName.id);
       return;
     }
 
@@ -597,7 +633,7 @@ export default function App() {
     <div style={{ background: C.bg, minHeight: "100vh", color: C.text, fontFamily: "system-ui, sans-serif" }}>
 
       {/* TOPBAR */}
-      <div style={{ position: "sticky", top: 0, zIndex: 50, background: `${C.surface}ee`, backdropFilter: "blur(12px)", borderBottom: `1px solid ${C.border}`, padding: "10px 14px" }}>
+      <div data-topbar="true" style={{ position: "sticky", top: 0, zIndex: 50, background: `${C.surface}ee`, backdropFilter: "blur(12px)", borderBottom: `1px solid ${C.border}`, padding: "10px 14px" }}>
 
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
           <span style={{ fontSize: 17, fontWeight: 900, background: `linear-gradient(135deg, ${C.greenLight}, ${C.goldLight})`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
