@@ -494,40 +494,29 @@ export default function App() {
     .toLowerCase()
     .trim();
 
-  // Faz scroll considerando a altura da topbar fixa (cross-platform: web, iOS, Android, WebView)
+  // Faz scroll até a seção, compensando a topbar fixa
   const scrollToSection = (sectionId) => {
-    // requestAnimationFrame garante que o DOM finalizou a renderização antes de medir
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
+    setTimeout(() => {
+      try {
         const el = sectionRefs.current[sectionId];
         if (!el) return;
 
-        // Detecta a topbar — usa altura real renderizada
         const topbar = document.querySelector('[data-topbar="true"]');
-        const topbarHeight = topbar ? topbar.getBoundingClientRect().height : 0;
+        const topbarHeight = topbar ? topbar.offsetHeight : 0;
 
-        // getBoundingClientRect().top dá a distância do topo da viewport
-        const rect = el.getBoundingClientRect();
+        const elementTop = el.getBoundingClientRect().top + window.pageYOffset;
+        const offsetPosition = elementTop - topbarHeight - 12;
 
-        // Pega o scroll atual de forma cross-browser (iOS Safari, Android, etc)
-        const currentScroll = window.pageYOffset
-          || document.documentElement.scrollTop
-          || document.body.scrollTop
-          || 0;
-
-        const targetY = currentScroll + rect.top - topbarHeight - 12;
-
-        // Detecta suporte a smooth scrolling (iOS antigo não suporta)
-        const supportsSmooth = 'scrollBehavior' in document.documentElement.style;
-
-        if (supportsSmooth) {
-          window.scrollTo({ top: Math.max(0, targetY), behavior: "smooth" });
-        } else {
-          // Fallback para iOS antigo: scroll instantâneo
-          window.scrollTo(0, Math.max(0, targetY));
-        }
-      });
-    });
+        window.scrollTo({
+          top: Math.max(0, offsetPosition),
+          behavior: "smooth"
+        });
+      } catch (err) {
+        console.error("Erro no scroll:", err);
+        // Fallback se algo der errado
+        sectionRefs.current[sectionId]?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }, 50);
   };
 
   const handleSearch = (val) => {
