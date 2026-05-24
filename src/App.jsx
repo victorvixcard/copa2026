@@ -486,18 +486,49 @@ export default function App() {
   const repCount = Object.values(stickerState).filter(v => v === STATUS.REPEATED).length;
   const pct = Math.round(((haveCount + repCount) / TOTAL) * 100);
 
+  // Normaliza string: remove acento, deixa minúsculo, tira espaços extras
+  const norm = (s) => (s || "")
+    .toString()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+
   const handleSearch = (val) => {
     setSearch(val);
     if (!val.trim()) { setHighlight(null); return; }
-    const q = val.trim().toUpperCase();
+
+    const q = norm(val);
+    const qUpper = val.trim().toUpperCase();
+
+    // 1) Busca por código exato de figurinha (ex: BRA-7)
     for (const sec of ALBUM_DATA) {
-      const found = sec.stickers.find(s => s.id.toUpperCase() === q);
+      const found = sec.stickers.find(s => s.id.toUpperCase() === qUpper);
       if (found) {
         setHighlight(found.id);
         setTimeout(() => sectionRefs.current[sec.id]?.scrollIntoView({ behavior: "smooth", block: "center" }), 100);
         return;
       }
     }
+
+    // 2) Busca por sigla exata (ex: BRA, ARG)
+    const sectionByCode = ALBUM_DATA.find(sec => norm(sec.code) === q);
+    if (sectionByCode) {
+      setHighlight(null);
+      setTimeout(() => sectionRefs.current[sectionByCode.id]?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
+      return;
+    }
+
+    // 3) Busca por nome do país ou label parcial (ex: "brasil", "esp", "fran")
+    const sectionByName = ALBUM_DATA.find(sec =>
+      norm(sec.label).includes(q) || norm(sec.code).includes(q)
+    );
+    if (sectionByName) {
+      setHighlight(null);
+      setTimeout(() => sectionRefs.current[sectionByName.id]?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
+      return;
+    }
+
     setHighlight(null);
   };
 
@@ -615,7 +646,7 @@ export default function App() {
 
         {/* Busca */}
         <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-          <input value={search} onChange={e => handleSearch(e.target.value)} placeholder="🔍 Buscar (ex: BRA-7)"
+          <input value={search} onChange={e => handleSearch(e.target.value)} placeholder="🔍 Buscar (Brasil, BRA, BRA-7)"
             style={{ flex: 1, background: C.surfaceUp, border: `1px solid ${C.border}`, borderRadius: 10, padding: "8px 12px", color: C.text, fontSize: 13, outline: "none" }} />
           <button onClick={() => { setSearch(""); setHighlight(null); }}
             style={{ background: C.surfaceUp, border: `1px solid ${C.border}`, borderRadius: 10, padding: "8px 12px", color: C.muted, cursor: "pointer" }}>✕</button>
