@@ -494,31 +494,6 @@ export default function App() {
     .toLowerCase()
     .trim();
 
-  // Faz scroll até a seção, compensando a topbar fixa
-  const scrollToSection = (sectionId) => {
-    setTimeout(() => {
-      try {
-        const el = sectionRefs.current[sectionId];
-        if (!el) return;
-
-        const topbar = document.querySelector('[data-topbar="true"]');
-        const topbarHeight = topbar ? topbar.offsetHeight : 0;
-
-        const elementTop = el.getBoundingClientRect().top + window.pageYOffset;
-        const offsetPosition = elementTop - topbarHeight - 12;
-
-        window.scrollTo({
-          top: Math.max(0, offsetPosition),
-          behavior: "smooth"
-        });
-      } catch (err) {
-        console.error("Erro no scroll:", err);
-        // Fallback se algo der errado
-        sectionRefs.current[sectionId]?.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-    }, 50);
-  };
-
   const handleSearch = (val) => {
     setSearch(val);
     if (!val.trim()) { setHighlight(null); return; }
@@ -531,7 +506,7 @@ export default function App() {
       const found = sec.stickers.find(s => s.id.toUpperCase() === qUpper);
       if (found) {
         setHighlight(found.id);
-        scrollToSection(sec.id);
+        setTimeout(() => sectionRefs.current[sec.id]?.scrollIntoView({ behavior: "smooth", block: "center" }), 100);
         return;
       }
     }
@@ -540,7 +515,7 @@ export default function App() {
     const sectionByCode = ALBUM_DATA.find(sec => norm(sec.code) === q);
     if (sectionByCode) {
       setHighlight(null);
-      scrollToSection(sectionByCode.id);
+      setTimeout(() => sectionRefs.current[sectionByCode.id]?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
       return;
     }
 
@@ -550,7 +525,7 @@ export default function App() {
     );
     if (sectionByName) {
       setHighlight(null);
-      scrollToSection(sectionByName.id);
+      setTimeout(() => sectionRefs.current[sectionByName.id]?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
       return;
     }
 
@@ -622,7 +597,7 @@ export default function App() {
     <div style={{ background: C.bg, minHeight: "100vh", color: C.text, fontFamily: "system-ui, sans-serif" }}>
 
       {/* TOPBAR */}
-      <div data-topbar="true" style={{ position: "sticky", top: 0, zIndex: 50, background: `${C.surface}ee`, backdropFilter: "blur(12px)", borderBottom: `1px solid ${C.border}`, padding: "10px 14px" }}>
+      <div style={{ position: "sticky", top: 0, zIndex: 50, background: `${C.surface}ee`, backdropFilter: "blur(12px)", borderBottom: `1px solid ${C.border}`, padding: "10px 14px" }}>
 
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
           <span style={{ fontSize: 17, fontWeight: 900, background: `linear-gradient(135deg, ${C.greenLight}, ${C.goldLight})`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
