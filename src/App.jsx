@@ -494,6 +494,16 @@ export default function App() {
     .toLowerCase()
     .trim();
 
+  // Helper de scroll usando ID do DOM (mais confiável que refs)
+  const scrollToSectionById = (sectionId) => {
+    setTimeout(() => {
+      const el = document.getElementById(`section-${sectionId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }, 100);
+  };
+
   const handleSearch = (val) => {
     setSearch(val);
     if (!val.trim()) { setHighlight(null); return; }
@@ -506,26 +516,26 @@ export default function App() {
       const found = sec.stickers.find(s => s.id.toUpperCase() === qUpper);
       if (found) {
         setHighlight(found.id);
-        setTimeout(() => sectionRefs.current[sec.id]?.scrollIntoView({ behavior: "smooth", block: "center" }), 100);
+        scrollToSectionById(sec.id);
         return;
       }
     }
 
-    // 2) Busca por sigla exata (ex: BRA, ARG)
+    // 2) Busca por sigla exata (ex: BRA, ARG, ECU, CRO)
     const sectionByCode = ALBUM_DATA.find(sec => norm(sec.code) === q);
     if (sectionByCode) {
       setHighlight(null);
-      setTimeout(() => sectionRefs.current[sectionByCode.id]?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
+      scrollToSectionById(sectionByCode.id);
       return;
     }
 
-    // 3) Busca por nome do país ou label parcial (ex: "brasil", "esp", "fran")
+    // 3) Busca por nome do país ou label parcial
     const sectionByName = ALBUM_DATA.find(sec =>
       norm(sec.label).includes(q) || norm(sec.code).includes(q)
     );
     if (sectionByName) {
       setHighlight(null);
-      setTimeout(() => sectionRefs.current[sectionByName.id]?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
+      scrollToSectionById(sectionByName.id);
       return;
     }
 
@@ -670,7 +680,7 @@ export default function App() {
       {/* CONTEÚDO */}
       <div style={{ padding: "12px 12px 80px" }}>
         {view === "album" && ALBUM_DATA.map(section => (
-          <div key={section.id} ref={el => sectionRefs.current[section.id] = el}>
+          <div key={section.id} id={`section-${section.id}`} ref={el => sectionRefs.current[section.id] = el}>
             <AlbumSection section={section} stateMap={stickerState} onTap={tap} highlight={highlight} />
           </div>
         ))}
