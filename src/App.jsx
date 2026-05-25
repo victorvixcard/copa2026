@@ -404,6 +404,8 @@ export default function App() {
   const [showAdmin, setShowAdmin] = useState(false);
   const [search, setSearch] = useState("");
   const [highlight, setHighlight] = useState(null);
+  const [listening, setListening] = useState(false);
+  const recognitionRef = useRef(null);
   const [quickInput, setQuickInput] = useState("");
   const [quickOpen, setQuickOpen] = useState(false);
   const [toast, setToast] = useState(null);
@@ -495,6 +497,60 @@ export default function App() {
     .trim();
 
   // Busca: agora simplesmente atualiza o termo e a tela filtra automaticamente
+  // Reconhecimento de voz nativo (Web Speech API)
+  const startVoiceSearch = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      setToast({ type: "error", message: "Seu navegador não suporta busca por voz. Use Chrome ou Safari." });
+      return;
+    }
+
+    // Se já está ouvindo, para
+    if (listening && recognitionRef.current) {
+      recognitionRef.current.stop();
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "pt-BR";
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    recognition.continuous = false;
+
+    recognition.onstart = () => {
+      setListening(true);
+    };
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      // Remove ponto final que o reconhecimento às vezes adiciona
+      const cleaned = transcript.replace(/[.,!?]$/, "").trim();
+      handleSearch(cleaned);
+    };
+
+    recognition.onerror = (event) => {
+      setListening(false);
+      if (event.error === "not-allowed" || event.error === "service-not-allowed") {
+        setToast({ type: "error", message: "Permita o uso do microfone para buscar por voz." });
+      } else if (event.error === "no-speech") {
+        setToast({ type: "error", message: "Não ouvi nada. Tente novamente." });
+      }
+    };
+
+    recognition.onend = () => {
+      setListening(false);
+      recognitionRef.current = null;
+    };
+
+    recognitionRef.current = recognition;
+    try {
+      recognition.start();
+    } catch (e) {
+      setListening(false);
+      console.error("Erro ao iniciar reconhecimento:", e);
+    }
+  };
+
   const handleSearch = (val) => {
     setSearch(val);
 
@@ -647,6 +703,22 @@ export default function App() {
         <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
           <input value={search} onChange={e => handleSearch(e.target.value)} placeholder="🔍 Filtrar por país (Brasil, BRA, ECU...)"
             style={{ flex: 1, background: C.surfaceUp, border: `1px solid ${C.border}`, borderRadius: 10, padding: "8px 12px", color: C.text, fontSize: 13, outline: "none" }} />
+          <button onClick={startVoiceSearch}
+            title={listening ? "Ouvindo... toque para parar" : "Buscar por voz"}
+            style={{
+              background: listening ? C.green : C.surfaceUp,
+              border: `1px solid ${listening ? C.green : C.border}`,
+              borderRadius: 10,
+              padding: "8px 12px",
+              color: listening ? "#fff" : C.muted,
+              cursor: "pointer",
+              fontSize: 16,
+              transition: "all 0.2s",
+              animation: listening ? "pulse 1.2s ease-in-out infinite" : "none",
+              minWidth: 42
+            }}>
+            {listening ? "🎙️" : "🎤"}
+          </button>
           <button onClick={() => { setSearch(""); setHighlight(null); }}
             style={{ background: C.surfaceUp, border: `1px solid ${C.border}`, borderRadius: 10, padding: "8px 12px", color: C.muted, cursor: "pointer" }}>✕</button>
         </div>

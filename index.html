@@ -17,6 +17,23 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="description" content="Controle suas figurinhas da Copa do Mundo 2026 de forma simples e rápida." />
     <title>Meu Álbum 2026 — Copa do Mundo</title>
+
+    <!-- Limpar QUALQUER service worker / cache antigo que sobreviva ao limpar histórico -->
+    <script>
+      // Desregistrar service workers
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(regs => {
+          regs.forEach(reg => reg.unregister());
+        }).catch(() => {});
+      }
+      // Limpar Cache Storage (PWA cache)
+      if ('caches' in window) {
+        caches.keys().then(keys => {
+          keys.forEach(key => caches.delete(key));
+        }).catch(() => {});
+      }
+    </script>
+
     <style>
       html, body {
         height: 100%;
@@ -31,6 +48,10 @@
         padding-bottom: env(safe-area-inset-bottom);
         padding-left: env(safe-area-inset-left);
         padding-right: env(safe-area-inset-right);
+      }
+      @keyframes pulse {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.6); }
+        50% { box-shadow: 0 0 0 8px rgba(22, 163, 74, 0); }
       }
     </style>
   </head>
