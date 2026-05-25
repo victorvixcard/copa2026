@@ -494,52 +494,53 @@ export default function App() {
     .toLowerCase()
     .trim();
 
-  // Helper de scroll usando ID do DOM (mais confiável que refs)
-  const scrollToSectionById = (sectionId) => {
-    setTimeout(() => {
-      const el = document.getElementById(`section-${sectionId}`);
-      if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "center" });
-      }
-    }, 100);
-  };
-
   const handleSearch = (val) => {
     setSearch(val);
-    if (!val.trim()) { setHighlight(null); return; }
+    setHighlight(null);
+    if (!val.trim()) return;
 
     const q = norm(val);
     const qUpper = val.trim().toUpperCase();
+
+    let targetSectionId = null;
+    let stickerHighlight = null;
 
     // 1) Busca por código exato de figurinha (ex: BRA-7)
     for (const sec of ALBUM_DATA) {
       const found = sec.stickers.find(s => s.id.toUpperCase() === qUpper);
       if (found) {
-        setHighlight(found.id);
-        scrollToSectionById(sec.id);
-        return;
+        targetSectionId = sec.id;
+        stickerHighlight = found.id;
+        break;
       }
     }
 
-    // 2) Busca por sigla exata (ex: BRA, ARG, ECU, CRO)
-    const sectionByCode = ALBUM_DATA.find(sec => norm(sec.code) === q);
-    if (sectionByCode) {
-      setHighlight(null);
-      scrollToSectionById(sectionByCode.id);
-      return;
+    // 2) Busca por sigla exata (BRA, ARG, ECU, CRO...)
+    if (!targetSectionId) {
+      const sec = ALBUM_DATA.find(s => norm(s.code) === q);
+      if (sec) targetSectionId = sec.id;
     }
 
-    // 3) Busca por nome do país ou label parcial
-    const sectionByName = ALBUM_DATA.find(sec =>
-      norm(sec.label).includes(q) || norm(sec.code).includes(q)
-    );
-    if (sectionByName) {
-      setHighlight(null);
-      scrollToSectionById(sectionByName.id);
-      return;
+    // 3) Busca parcial por nome ou code (Brasil, equador, croacia...)
+    if (!targetSectionId) {
+      const sec = ALBUM_DATA.find(s =>
+        norm(s.label).includes(q) || norm(s.code).includes(q)
+      );
+      if (sec) targetSectionId = sec.id;
     }
 
-    setHighlight(null);
+    if (targetSectionId) {
+      if (stickerHighlight) setHighlight(stickerHighlight);
+      // Scroll robusto via getElementById
+      requestAnimationFrame(() => {
+        const el = document.getElementById(`section-${targetSectionId}`);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+        } else {
+          console.warn("Seção não encontrada no DOM:", targetSectionId);
+        }
+      });
+    }
   };
 
   const handleQuickInput = async () => {
