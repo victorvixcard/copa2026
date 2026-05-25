@@ -693,7 +693,7 @@ export default function App() {
             </div>
             {missingList.length === 0
               ? <div style={{ textAlign: "center", padding: "40px 0", color: C.greenLight, fontSize: 16, fontWeight: 700 }}>🏆 Álbum completo!</div>
-              : ALBUM_DATA.map(sec => {
+              : filteredAlbum.map(sec => {
                   const items = sec.stickers.filter(s => (stickerState[s.id] ?? STATUS.MISSING) === STATUS.MISSING);
                   if (!items.length) return null;
                   return (
@@ -713,6 +713,11 @@ export default function App() {
                   );
                 })
             }
+            {missingList.length > 0 && search.trim() && filteredAlbum.every(sec => !sec.stickers.some(s => (stickerState[s.id] ?? STATUS.MISSING) === STATUS.MISSING)) && (
+              <div style={{ textAlign: "center", padding: "30px 20px", color: C.muted, fontSize: 13 }}>
+                Nenhuma figurinha faltando nessa busca.
+              </div>
+            )}
           </div>
         )}
 
@@ -724,7 +729,7 @@ export default function App() {
             </div>
             {repeatedList.length === 0
               ? <div style={{ textAlign: "center", padding: "40px 0", color: C.muted, fontSize: 14 }}>Nenhuma repetida ainda.</div>
-              : ALBUM_DATA.map(sec => {
+              : filteredAlbum.map(sec => {
                   const items = sec.stickers.filter(s => stickerState[s.id] === STATUS.REPEATED);
                   if (!items.length) return null;
                   return (
@@ -744,6 +749,11 @@ export default function App() {
                   );
                 })
             }
+            {repeatedList.length > 0 && search.trim() && filteredAlbum.every(sec => !sec.stickers.some(s => stickerState[s.id] === STATUS.REPEATED)) && (
+              <div style={{ textAlign: "center", padding: "30px 20px", color: C.muted, fontSize: 13 }}>
+                Nenhuma repetida nessa busca.
+              </div>
+            )}
           </div>
         )}
       </div>
