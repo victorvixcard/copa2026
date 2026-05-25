@@ -494,73 +494,42 @@ export default function App() {
     .toLowerCase()
     .trim();
 
+  // Busca: agora simplesmente atualiza o termo e a tela filtra automaticamente
   const handleSearch = (val) => {
     setSearch(val);
+
+    // Se for código exato de figurinha (BRA-7), destacar
+    if (val.trim()) {
+      const qUpper = val.trim().toUpperCase();
+      for (const sec of ALBUM_DATA) {
+        const found = sec.stickers.find(s => s.id.toUpperCase() === qUpper);
+        if (found) {
+          setHighlight(found.id);
+          return;
+        }
+      }
+    }
     setHighlight(null);
-    if (!val.trim()) return;
+  };
 
-    const q = norm(val);
-    const qUpper = val.trim().toUpperCase();
+  // Filtra ALBUM_DATA conforme termo de busca
+  const filteredAlbum = (() => {
+    if (!search.trim()) return ALBUM_DATA;
+    const q = norm(search);
+    const qUpper = search.trim().toUpperCase();
 
-    let targetSectionId = null;
-    let stickerHighlight = null;
-
-    // 1) Busca por código exato de figurinha (ex: BRA-7)
+    // Se digitou código de figurinha (BRA-7), mostra a seção dela
     for (const sec of ALBUM_DATA) {
-      const found = sec.stickers.find(s => s.id.toUpperCase() === qUpper);
-      if (found) {
-        targetSectionId = sec.id;
-        stickerHighlight = found.id;
-        break;
+      if (sec.stickers.some(s => s.id.toUpperCase() === qUpper)) {
+        return [sec];
       }
     }
 
-    // 2) Busca por sigla exata (BRA, ARG, ECU, CRO...)
-    if (!targetSectionId) {
-      const sec = ALBUM_DATA.find(s => norm(s.code) === q);
-      if (sec) targetSectionId = sec.id;
-    }
-
-    // 3) Busca parcial por nome ou code (Brasil, equador, croacia...)
-    if (!targetSectionId) {
-      const sec = ALBUM_DATA.find(s =>
-        norm(s.label).includes(q) || norm(s.code).includes(q)
-      );
-      if (sec) targetSectionId = sec.id;
-    }
-
-    if (targetSectionId) {
-      if (stickerHighlight) setHighlight(stickerHighlight);
-      // Scroll robusto: window.scrollTo com posição calculada
-      // (scrollIntoView falha silenciosamente no Chrome Android quando alvo está muito longe)
-      requestAnimationFrame(() => {
-        const el = document.getElementById(`section-${targetSectionId}`);
-        if (!el) {
-          console.warn("Seção não encontrada no DOM:", targetSectionId);
-          return;
-        }
-
-        // Calcula posição absoluta na página
-        const rect = el.getBoundingClientRect();
-        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-        const absoluteTop = rect.top + scrollTop;
-
-        // Compensa topbar fixa (pega altura dela em tempo real)
-        const topbar = document.querySelector('[data-topbar="true"]');
-        const topbarHeight = topbar ? topbar.offsetHeight : 0;
-
-        const targetY = Math.max(0, absoluteTop - topbarHeight - 12);
-
-        // window.scrollTo é mais confiável em Chrome mobile
-        try {
-          window.scrollTo({ top: targetY, behavior: "smooth" });
-        } catch (e) {
-          // Fallback para browsers muito antigos
-          window.scrollTo(0, targetY);
-        }
-      });
-    }
-  };
+    // Caso contrário, filtra por sigla ou nome
+    return ALBUM_DATA.filter(sec =>
+      norm(sec.code).includes(q) || norm(sec.label).includes(q)
+    );
+  })();
 
   const handleQuickInput = async () => {
     const lines = quickInput.split(/[\n,]+/).map(l => l.trim().toUpperCase()).filter(Boolean);
@@ -676,7 +645,7 @@ export default function App() {
 
         {/* Busca */}
         <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-          <input value={search} onChange={e => handleSearch(e.target.value)} placeholder="🔍 Buscar (Brasil, BRA, BRA-7)"
+          <input value={search} onChange={e => handleSearch(e.target.value)} placeholder="🔍 Filtrar por país (Brasil, BRA, ECU...)"
             style={{ flex: 1, background: C.surfaceUp, border: `1px solid ${C.border}`, borderRadius: 10, padding: "8px 12px", color: C.text, fontSize: 13, outline: "none" }} />
           <button onClick={() => { setSearch(""); setHighlight(null); }}
             style={{ background: C.surfaceUp, border: `1px solid ${C.border}`, borderRadius: 10, padding: "8px 12px", color: C.muted, cursor: "pointer" }}>✕</button>
@@ -699,7 +668,18 @@ export default function App() {
 
       {/* CONTEÚDO */}
       <div style={{ padding: "12px 12px 80px" }}>
-        {view === "album" && ALBUM_DATA.map(section => (
+        {view === "album" && filteredAlbum.length === 0 && (
+          <div style={{ textAlign: "center", padding: "60px 20px", color: C.muted }}>
+            <div style={{ fontSize: 40, marginBottom: 12 }}>🔍</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: C.text, marginBottom: 6 }}>
+              Nenhuma seleção encontrada
+            </div>
+            <div style={{ fontSize: 12 }}>
+              Tente buscar por sigla (BRA, ARG) ou nome (Brasil, Argentina)
+            </div>
+          </div>
+        )}
+        {view === "album" && filteredAlbum.map(section => (
           <div key={section.id} id={`section-${section.id}`} ref={el => sectionRefs.current[section.id] = el}>
             <AlbumSection section={section} stateMap={stickerState} onTap={tap} highlight={highlight} />
           </div>
