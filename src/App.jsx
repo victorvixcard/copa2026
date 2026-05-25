@@ -531,13 +531,32 @@ export default function App() {
 
     if (targetSectionId) {
       if (stickerHighlight) setHighlight(stickerHighlight);
-      // Scroll robusto via getElementById
+      // Scroll robusto: window.scrollTo com posição calculada
+      // (scrollIntoView falha silenciosamente no Chrome Android quando alvo está muito longe)
       requestAnimationFrame(() => {
         const el = document.getElementById(`section-${targetSectionId}`);
-        if (el) {
-          el.scrollIntoView({ behavior: "smooth", block: "center" });
-        } else {
+        if (!el) {
           console.warn("Seção não encontrada no DOM:", targetSectionId);
+          return;
+        }
+
+        // Calcula posição absoluta na página
+        const rect = el.getBoundingClientRect();
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        const absoluteTop = rect.top + scrollTop;
+
+        // Compensa topbar fixa (pega altura dela em tempo real)
+        const topbar = document.querySelector('[data-topbar="true"]');
+        const topbarHeight = topbar ? topbar.offsetHeight : 0;
+
+        const targetY = Math.max(0, absoluteTop - topbarHeight - 12);
+
+        // window.scrollTo é mais confiável em Chrome mobile
+        try {
+          window.scrollTo({ top: targetY, behavior: "smooth" });
+        } catch (e) {
+          // Fallback para browsers muito antigos
+          window.scrollTo(0, targetY);
         }
       });
     }
@@ -608,7 +627,7 @@ export default function App() {
     <div style={{ background: C.bg, minHeight: "100vh", color: C.text, fontFamily: "system-ui, sans-serif" }}>
 
       {/* TOPBAR */}
-      <div style={{ position: "sticky", top: 0, zIndex: 50, background: `${C.surface}ee`, backdropFilter: "blur(12px)", borderBottom: `1px solid ${C.border}`, padding: "10px 14px" }}>
+      <div data-topbar="true" style={{ position: "sticky", top: 0, zIndex: 50, background: `${C.surface}ee`, backdropFilter: "blur(12px)", borderBottom: `1px solid ${C.border}`, padding: "10px 14px" }}>
 
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
           <span style={{ fontSize: 17, fontWeight: 900, background: `linear-gradient(135deg, ${C.greenLight}, ${C.goldLight})`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
